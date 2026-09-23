@@ -26,6 +26,7 @@ GARE = {
     "200 Hs H76-18.30": ("200 m ostacoli (H76 - 18,30)", "corsa"),
     "Staffetta 4 X 100": ("Staffetta 4x100", "corsa"),
     "Staffetta 4 X 400": ("Staffetta 4x400", "corsa"),
+    "Marcia Km 3": ("Marcia 3 km", "corsa"),
     "Salto in alto": ("Salto in alto", "concorso"),
     "Salto in lungo": ("Salto in lungo", "concorso"),
     "Salto triplo": ("Salto triplo", "concorso"),
