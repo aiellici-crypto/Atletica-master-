@@ -78,6 +78,7 @@
     text-align: center;
   }
   #risultato[hidden] { display: none; }
+  .titolo { margin: 0 0 8px; font-size: 1.1rem; font-weight: 700; letter-spacing: .05em; }
   .punti { font-size: 3rem; font-weight: 700; color: var(--accent); line-height: 1.1; font-variant-numeric: tabular-nums; }
   .etichetta { color: var(--muted); font-size: .9rem; }
   .dettagli { margin-top: 12px; font-size: .9rem; color: var(--muted); }
@@ -247,7 +248,7 @@
       return;
     }
     var i = calcola(tab, v, g.tipo);
-    var intro = '<div class="etichetta">' + g.nome + " · " + selCat.value + " · " + mostra(v, g.tipo) + "</div>";
+    var intro = '<h2 class="titolo">PUNTEGGIO</h2><div class="etichetta">' + g.nome + " · " + selCat.value + " · " + mostra(v, g.tipo) + "</div>";
     if (i >= tab.length) {
       scrivi(intro + '<div class="punti">0</div><div class="etichetta">punti</div>' +
         '<p class="dettagli">Prestazione oltre il limite della tabella (' + mostra(tab[tab.length - 1][0], g.tipo) +
