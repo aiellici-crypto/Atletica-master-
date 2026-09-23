@@ -13,34 +13,43 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HEADER = re.compile(r"^(?P<gara>.+?) CdS Master (?P<sesso>Maschili|Femminili) Cat\. (?P<cat>M[MF]\d+)$")
 PERF = re.compile(r"^(?:(\d+)h)?(?:(\d+):)?(\d+)[.,](\d+)$")
 
-# Nome visualizzato, tipo (corsa: tempo minore = meglio; concorso: misura maggiore = meglio), ordine
+# Nome visualizzato e tipo (corsa: tempo minore = meglio; concorso: misura maggiore = meglio),
+# nell'ordine in cui compaiono nell'app
 GARE = {
-    "100 metri": ("100 m", "corsa", 1),
-    "200 metri": ("200 m", "corsa", 2),
-    "400 metri": ("400 m", "corsa", 3),
-    "800 metri": ("800 m", "corsa", 4),
-    "1500 metri": ("1500 m", "corsa", 5),
-    "3000 metri": ("3000 m", "corsa", 6),
-    "5000 metri": ("5000 m", "corsa", 7),
-    "200 Hs H76-18.30": ("200 m ostacoli (H76 - 18,30)", "corsa", 8),
-    "Staffetta 4 X 100": ("Staffetta 4x100", "corsa", 9),
-    "Staffetta 4 X 400": ("Staffetta 4x400", "corsa", 10),
-    "Salto in alto": ("Salto in alto", "concorso", 11),
-    "Salto in lungo": ("Salto in lungo", "concorso", 12),
-    "Salto triplo": ("Salto triplo", "concorso", 13),
-    "Peso Kg 2.000": ("Peso 2 kg", "concorso", 14),
-    "Peso Kg 3.000": ("Peso 3 kg", "concorso", 15),
-    "Peso Kg 4.000": ("Peso 4 kg", "concorso", 16),
-    "Disco Gr 750": ("Disco 750 g", "concorso", 17),
-    "Disco Kg 1,000": ("Disco 1 kg", "concorso", 18),
-    "Disco Kg 1,500": ("Disco 1,5 kg", "concorso", 19),
-    "Disco Kg 2,000": ("Disco 2 kg", "concorso", 20),
-    "Martello Kg 2.000": ("Martello 2 kg", "concorso", 21),
-    "Martello Kg 3.000": ("Martello 3 kg", "concorso", 22),
-    "Martello Kg 4.000": ("Martello 4 kg", "concorso", 23),
-    "Giavellotto Gr 400": ("Giavellotto 400 g", "concorso", 24),
-    "Giavellotto Gr 500": ("Giavellotto 500 g", "concorso", 25),
-    "Giavellotto Gr 600": ("Giavellotto 600 g", "concorso", 26),
+    "100 metri": ("100 m", "corsa"),
+    "200 metri": ("200 m", "corsa"),
+    "400 metri": ("400 m", "corsa"),
+    "800 metri": ("800 m", "corsa"),
+    "1500 metri": ("1500 m", "corsa"),
+    "3000 metri": ("3000 m", "corsa"),
+    "5000 metri": ("5000 m", "corsa"),
+    "200 Hs H76-18.30": ("200 m ostacoli (H76 - 18,30)", "corsa"),
+    "Staffetta 4 X 100": ("Staffetta 4x100", "corsa"),
+    "Staffetta 4 X 400": ("Staffetta 4x400", "corsa"),
+    "Salto in alto": ("Salto in alto", "concorso"),
+    "Salto in lungo": ("Salto in lungo", "concorso"),
+    "Salto triplo": ("Salto triplo", "concorso"),
+    "Peso Kg 2.000": ("Peso 2 kg", "concorso"),
+    "Peso Kg 3.000": ("Peso 3 kg", "concorso"),
+    "Peso Kg 4.000": ("Peso 4 kg", "concorso"),
+    "Peso Kg 5.000": ("Peso 5 kg", "concorso"),
+    "Peso Kg 6.000": ("Peso 6 kg", "concorso"),
+    "Peso Kg 7.260": ("Peso 7,260 kg", "concorso"),
+    "Disco Gr 750": ("Disco 750 g", "concorso"),
+    "Disco Kg 1,000": ("Disco 1 kg", "concorso"),
+    "Disco Kg 1,500": ("Disco 1,5 kg", "concorso"),
+    "Disco Kg 2,000": ("Disco 2 kg", "concorso"),
+    "Martello Kg 2.000": ("Martello 2 kg", "concorso"),
+    "Martello Kg 3.000": ("Martello 3 kg", "concorso"),
+    "Martello Kg 4.000": ("Martello 4 kg", "concorso"),
+    "Martello Kg 5.000": ("Martello 5 kg", "concorso"),
+    "Martello Kg 6.000": ("Martello 6 kg", "concorso"),
+    "Martello Kg 7.260": ("Martello 7,260 kg", "concorso"),
+    "Giavellotto Gr 400": ("Giavellotto 400 g", "concorso"),
+    "Giavellotto Gr 500": ("Giavellotto 500 g", "concorso"),
+    "Giavellotto Gr 600": ("Giavellotto 600 g", "concorso"),
+    "Giavellotto Gr 700": ("Giavellotto 700 g", "concorso"),
+    "Giavellotto Gr 800": ("Giavellotto 800 g", "concorso"),
 }
 SESSI = {"Maschili": "M", "Femminili": "F"}
 
@@ -74,9 +83,8 @@ def main():
 
     out = {"sessi": [{"codice": "M", "nome": "Maschile", "gare": []},
                      {"codice": "F", "nome": "Femminile", "gare": []}]}
-    gare_ordinate = sorted(GARE.values(), key=lambda g: g[2])
     for sesso in out["sessi"]:
-        for nome, tipo, _ in gare_ordinate:
+        for nome, tipo in GARE.values():
             if (sesso["codice"], nome) not in tabelle:
                 continue
             categorie = {}

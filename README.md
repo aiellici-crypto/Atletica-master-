@@ -18,7 +18,7 @@ peggiore della tabella vale 0 punti; una migliore del massimo riceve il punteggi
 
 ## Dati
 
-Le tabelle originali sono in `tabelle/maschili/` e `tabelle/femminili/` (femminili: aggiornamento 2014). `data/punteggi.js` è generato da:
+Le tabelle originali sono in `tabelle/maschili/` e `tabelle/femminili/` (aggiornamento 2014). `data/punteggi.js` è generato da:
 
 ```
 pip install pymupdf
