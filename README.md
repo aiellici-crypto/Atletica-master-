@@ -8,7 +8,7 @@ Aprire `index.html` in un browser. Non serve un server né una connessione a int
 
 Formati accettati per la prestazione:
 
-- corse: `12,34` / `12.34`, `1:45,30`, `1h07:10,37`
+- corse: `12,34` / `12.34`, `1:45,30`, `1h07:10,37`; sulla tastiera numerica del telefono si può usare solo la virgola: `1,45,30`, `1,07,10,37`
 - concorsi: misura in metri, es. `1,65` / `45.30`
 
 Se la prestazione non compare esattamente in tabella si usa la prima riga non migliore della prestazione

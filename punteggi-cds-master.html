@@ -127,8 +127,14 @@ window.PUNTEGGI = {"gare":[{"nome":"100 m","tipo":"corsa","categorie":{"MM35":[[
   function tabellaCorrente() { return garaCorrente().categorie[selCat.value]; }
 
   // Converte "1h07:10.37", "3:45.20", "3'45\"20", "12.3", "12,34" in centesimi.
+  // Sulla tastiera numerica del telefono mancano i due punti: per le corse si accetta
+  // anche solo virgola/punto, es. "1,41,41" = 1:41,41 e "1,07,10,37" = 1h07:10,37.
   function leggiPrestazione(testo, tipo) {
     var t = testo.trim().replace(/\s+/g, "").replace(/,/g, ".").replace(/[''’]/g, ":").replace(/["”]/g, ".");
+    if (tipo === "corsa" && /^\d+(\.\d+){2,3}$/.test(t)) {
+      var p = t.split(".");
+      t = (p.length === 4 ? p[0] + "h" : "") + p[p.length - 3] + ":" + p[p.length - 2] + "." + p[p.length - 1];
+    }
     var m = t.match(/^(?:(\d+)h)?(?:(\d+):)?(\d+)(?:\.(\d{1,2}))?$/i);
     if (!m) return null;
     if (tipo === "concorso" && (m[1] || m[2])) return null;
@@ -175,7 +181,8 @@ window.PUNTEGGI = {"gare":[{"nome":"100 m","tipo":"corsa","categorie":{"MM35":[[
     var medio = tab[Math.floor(tab.length / 2)][0];
     var unita = g.tipo === "concorso" ? "metri" : medio >= 6000 ? "min:sec,centesimi" : "secondi,centesimi";
     input.placeholder = mostra(medio, g.tipo).replace(" m", "");
-    formato.textContent = "Formato: " + unita + ", es. " + input.placeholder + ". Tabella da " + mostra(tab[0][0], g.tipo) +
+    var alt = g.tipo === "corsa" && medio >= 6000 ? " (oppure " + input.placeholder.replace(/[:h]/g, ",") + ")" : "";
+    formato.textContent = "Formato: " + unita + ", es. " + input.placeholder + alt + ". Tabella da " + mostra(tab[0][0], g.tipo) +
       " (" + tab[0][1] + " pt) a " + mostra(tab[tab.length - 1][0], g.tipo) + " (" + tab[tab.length - 1][1] + " pt).";
     risultato.hidden = true;
   }
