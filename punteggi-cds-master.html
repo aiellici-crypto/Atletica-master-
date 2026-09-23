@@ -57,6 +57,7 @@
     width: 100%;
   }
   select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  [aria-invalid="true"] { border-color: var(--error); }
   .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
   button {
     font: inherit;
@@ -123,13 +124,30 @@ window.PUNTEGGI = {"sessi":[{"codice":"M","nome":"Maschile","gare":[{"nome":"100
   var formato = document.getElementById("formato");
   var risultato = document.getElementById("risultato");
 
+  var campi = [selSesso, selGara, selCat, input];
+
+  // Svuota una tendina lasciando solo la voce iniziale "Scegli ..." (valore vuoto).
+  function svuota(sel, testo) {
+    sel.innerHTML = "";
+    var o = new Option(testo, "");
+    o.disabled = true;
+    sel.add(o);
+    sel.value = "";
+  }
+
+  svuota(selSesso, "Scegli il sesso");
   sessi.forEach(function (s, i) {
     selSesso.add(new Option(s.nome, i));
   });
 
-  function gare() { return sessi[selSesso.value].gare; }
-  function garaCorrente() { return gare()[selGara.value]; }
-  function tabellaCorrente() { return garaCorrente().categorie[selCat.value]; }
+  function garaCorrente() {
+    if (selSesso.value === "" || selGara.value === "") return null;
+    return sessi[selSesso.value].gare[selGara.value];
+  }
+  function tabellaCorrente() {
+    var g = garaCorrente();
+    return g && selCat.value !== "" ? g.categorie[selCat.value] : null;
+  }
 
   // Converte "1h07:10.37", "3:45.20", "3'45\"20", "12.3", "12,34" in centesimi.
   // Sulla tastiera numerica del telefono mancano i due punti: per le corse si accetta
@@ -175,41 +193,57 @@ window.PUNTEGGI = {"sessi":[{"codice":"M","nome":"Maschile","gare":[{"nome":"100
 
   // Cambiando sesso si resta, se esiste, sulla stessa specialità.
   function aggiornaGare() {
-    var prec = selGara.selectedIndex >= 0 ? selGara.options[selGara.selectedIndex].text : null;
-    selGara.innerHTML = "";
-    gare().forEach(function (g, i) {
-      selGara.add(new Option(g.nome, i));
-      if (g.nome === prec) selGara.value = i;
-    });
+    var prec = selGara.value !== "" ? selGara.options[selGara.selectedIndex].text : null;
+    svuota(selGara, "Scegli la specialità");
+    if (selSesso.value !== "") {
+      sessi[selSesso.value].gare.forEach(function (g, i) {
+        selGara.add(new Option(g.nome, i));
+        if (g.nome === prec) selGara.value = i;
+      });
+    }
     aggiornaCategorie();
   }
 
   function aggiornaCategorie() {
     // stessa fascia d'età se disponibile (MM50 <-> MF50)
     var g = garaCorrente(), eta = selCat.value.slice(2);
-    selCat.innerHTML = "";
-    Object.keys(g.categorie).forEach(function (c) {
-      selCat.add(new Option(c, c));
-      if (c.slice(2) === eta) selCat.value = c;
-    });
+    svuota(selCat, "Scegli la categoria");
+    if (g) {
+      Object.keys(g.categorie).forEach(function (c) {
+        selCat.add(new Option(c, c));
+        if (eta && c.slice(2) === eta) selCat.value = c;
+      });
+    }
     aggiornaFormato();
   }
 
   function aggiornaFormato() {
     var g = garaCorrente(), tab = tabellaCorrente();
+    risultato.hidden = true;
+    if (!tab) {
+      input.placeholder = "";
+      formato.textContent = "Scegli sesso, specialità e categoria per vedere il formato.";
+      return;
+    }
     var medio = tab[Math.floor(tab.length / 2)][0];
     var unita = g.tipo === "concorso" ? "metri" : medio >= 6000 ? "min:sec,centesimi" : "secondi,centesimi";
     input.placeholder = mostra(medio, g.tipo).replace(" m", "");
     var alt = g.tipo === "corsa" && medio >= 6000 ? " (oppure " + input.placeholder.replace(/[:h]/g, ",") + ")" : "";
     formato.textContent = "Formato: " + unita + ", es. " + input.placeholder + alt + ". Tabella da " + mostra(tab[0][0], g.tipo) +
       " (" + tab[0][1] + " pt) a " + mostra(tab[tab.length - 1][0], g.tipo) + " (" + tab[tab.length - 1][1] + " pt).";
-    risultato.hidden = true;
   }
 
   function scrivi(html) { risultato.innerHTML = html; risultato.hidden = false; }
 
   document.getElementById("calcolo").addEventListener("submit", function (e) {
     e.preventDefault();
+    var vuoti = campi.filter(function (c) { return c.value.trim() === ""; });
+    campi.forEach(function (c) { c.setAttribute("aria-invalid", vuoti.indexOf(c) >= 0); });
+    if (vuoti.length) {
+      scrivi('<p class="errore">Compila tutti i campi</p>');
+      vuoti[0].focus();
+      return;
+    }
     var g = garaCorrente(), tab = tabellaCorrente();
     var v = leggiPrestazione(input.value, g.tipo);
     if (v === null || v === 0) {
@@ -239,6 +273,9 @@ window.PUNTEGGI = {"sessi":[{"codice":"M","nome":"Maschile","gare":[{"nome":"100
       '<p class="dettagli">' + dettagli + "</p>");
   });
 
+  campi.forEach(function (c) {
+    c.addEventListener(c === input ? "input" : "change", function () { c.removeAttribute("aria-invalid"); });
+  });
   selSesso.addEventListener("change", aggiornaGare);
   selGara.addEventListener("change", aggiornaCategorie);
   selCat.addEventListener("change", aggiornaFormato);
