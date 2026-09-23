@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Punteggi CdS Master</title>
-<meta name="description" content="Calcolo del punteggio CdS Master Maschili a partire da specialità, categoria e prestazione.">
+<meta name="description" content="Calcolo del punteggio CdS Master maschili e femminili a partire da sesso, specialità, categoria e prestazione.">
 <style>
   :root {
     --bg: #f5f6f8;
@@ -86,9 +86,12 @@
 <body>
 <main>
   <h1>Punteggi CdS Master</h1>
-  <p class="sub">Tabelle Master Maschili: scegli specialità e categoria, inserisci la prestazione.</p>
+  <p class="sub">Tabelle Master maschili e femminili: scegli sesso, specialità e categoria, inserisci la prestazione.</p>
 
   <form id="calcolo" novalidate>
+    <label>Sesso
+      <select id="sesso"></select>
+    </label>
     <label>Specialità
       <select id="gara"></select>
     </label>
@@ -108,18 +111,20 @@
 <script src="data/punteggi.js"></script>
 <script>
 (function () {
-  var gare = window.PUNTEGGI.gare;
+  var sessi = window.PUNTEGGI.sessi;
+  var selSesso = document.getElementById("sesso");
   var selGara = document.getElementById("gara");
   var selCat = document.getElementById("categoria");
   var input = document.getElementById("prestazione");
   var formato = document.getElementById("formato");
   var risultato = document.getElementById("risultato");
 
-  gare.forEach(function (g, i) {
-    selGara.add(new Option(g.nome, i));
+  sessi.forEach(function (s, i) {
+    selSesso.add(new Option(s.nome, i));
   });
 
-  function garaCorrente() { return gare[selGara.value]; }
+  function gare() { return sessi[selSesso.value].gare; }
+  function garaCorrente() { return gare()[selGara.value]; }
   function tabellaCorrente() { return garaCorrente().categorie[selCat.value]; }
 
   // Converte "1h07:10.37", "3:45.20", "3'45\"20", "12.3", "12,34" in centesimi.
@@ -164,11 +169,25 @@
     return lo; // indice in tab, oppure tab.length se sotto la soglia minima
   }
 
+  // Cambiando sesso si resta, se esiste, sulla stessa specialità.
+  function aggiornaGare() {
+    var prec = selGara.selectedIndex >= 0 ? selGara.options[selGara.selectedIndex].text : null;
+    selGara.innerHTML = "";
+    gare().forEach(function (g, i) {
+      selGara.add(new Option(g.nome, i));
+      if (g.nome === prec) selGara.value = i;
+    });
+    aggiornaCategorie();
+  }
+
   function aggiornaCategorie() {
-    var g = garaCorrente(), prec = selCat.value;
+    // stessa fascia d'età se disponibile (MM50 <-> MF50)
+    var g = garaCorrente(), eta = selCat.value.slice(2);
     selCat.innerHTML = "";
-    Object.keys(g.categorie).forEach(function (c) { selCat.add(new Option(c, c)); });
-    if (g.categorie[prec]) selCat.value = prec;
+    Object.keys(g.categorie).forEach(function (c) {
+      selCat.add(new Option(c, c));
+      if (c.slice(2) === eta) selCat.value = c;
+    });
     aggiornaFormato();
   }
 
@@ -216,9 +235,10 @@
       '<p class="dettagli">' + dettagli + "</p>");
   });
 
+  selSesso.addEventListener("change", aggiornaGare);
   selGara.addEventListener("change", aggiornaCategorie);
   selCat.addEventListener("change", aggiornaFormato);
-  aggiornaCategorie();
+  aggiornaGare();
 })();
 </script>
 </body>
