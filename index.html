@@ -83,6 +83,13 @@
   .etichetta { color: var(--muted); font-size: .9rem; }
   .dettagli { margin-top: 12px; font-size: .9rem; color: var(--muted); }
   .errore { color: var(--error); font-weight: 600; }
+  .nuovo {
+    margin-top: 16px;
+    width: 100%;
+    background: var(--card);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
   .tastierino { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: -6px; }
   .tastierino[hidden] { display: none; }
   .tastierino button {
@@ -262,6 +269,15 @@
 
   function scrivi(html) { risultato.innerHTML = html; risultato.hidden = false; }
 
+  var NUOVO = '<button type="button" class="nuovo" id="nuovo">Inserisci un nuovo punteggio</button>';
+
+  // Ricarica la pagina; "#nuovo" dice alla pagina ricaricata di portare il focus sul sesso.
+  risultato.addEventListener("click", function (e) {
+    if (e.target.id !== "nuovo") return;
+    location.hash = "nuovo";
+    location.reload();
+  });
+
   document.getElementById("calcolo").addEventListener("submit", function (e) {
     e.preventDefault();
     var vuoti = campi.filter(function (c) { return c.value.trim() === ""; });
@@ -282,7 +298,7 @@
     if (i >= tab.length) {
       scrivi(intro + '<div class="punti">0</div><div class="etichetta">punti</div>' +
         '<p class="dettagli">Prestazione oltre il limite della tabella (' + mostra(tab[tab.length - 1][0], g.tipo) +
-        " = " + tab[tab.length - 1][1] + " pt).</p>");
+        " = " + tab[tab.length - 1][1] + " pt).</p>" + NUOVO);
       return;
     }
     var riga = tab[i], dettagli;
@@ -297,7 +313,7 @@
       if (j >= 0) dettagli += " Per " + tab[j][1] + " pt serve " + mostra(tab[j][0], g.tipo) + ".";
     }
     scrivi(intro + '<div class="punti">' + riga[1] + '</div><div class="etichetta">punti</div>' +
-      '<p class="dettagli">' + dettagli + "</p>");
+      '<p class="dettagli">' + dettagli + "</p>" + NUOVO);
   });
 
   // Sui touchscreen la tastiera numerica del telefono non ha i due punti: al suo posto
@@ -305,8 +321,9 @@
   if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) {
     input.setAttribute("inputmode", "none");
     input.addEventListener("focus", function () { tastierino.hidden = false; });
-    // si chiude toccando qualsiasi altro punto della pagina
-    document.addEventListener("pointerdown", function (e) {
+    // si chiude toccando qualsiasi altro punto della pagina; su "click" e non su
+    // "pointerdown", altrimenti la pagina si sposta prima che il tocco arrivi al pulsante
+    document.addEventListener("click", function (e) {
       if (e.target !== input && !tastierino.contains(e.target)) tastierino.hidden = true;
     });
     tastierino.addEventListener("click", function (e) {
@@ -341,6 +358,10 @@
   selGara.addEventListener("change", aggiornaCategorie);
   selCat.addEventListener("change", aggiornaFormato);
   aggiornaGare();
+  if (location.hash === "#nuovo") {
+    history.replaceState(null, "", location.pathname + location.search);
+    selSesso.focus();
+  }
 })();
 </script>
 </body>
