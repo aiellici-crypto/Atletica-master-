@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Punteggi CdS Master</title>
+<meta name="description" content="Calcolo del punteggio CdS Master Maschili a partire da specialità, categoria e prestazione.">
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --text: #1c1f24;
+    --muted: #5d6570;
+    --border: #d7dbe0;
+    --accent: #0b6bcb;
+    --accent-soft: #e6f0fb;
+    --error: #b42318;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121417;
+      --card: #1c1f24;
+      --text: #eceef1;
+      --muted: #9aa3ad;
+      --border: #333941;
+      --accent: #5aa7f0;
+      --accent-soft: #1b2a3a;
+      --error: #f97066;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 480px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: .95rem; }
+  form {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: grid;
+    gap: 16px;
+  }
+  label { display: grid; gap: 6px; font-weight: 600; font-size: .95rem; }
+  select, input {
+    font: inherit;
+    color: inherit;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    width: 100%;
+  }
+  select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
+  button {
+    font: inherit;
+    font-weight: 600;
+    border: 0;
+    border-radius: 8px;
+    padding: 12px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  #risultato {
+    margin-top: 20px;
+    border-radius: 12px;
+    padding: 20px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  #risultato[hidden] { display: none; }
+  .punti { font-size: 3rem; font-weight: 700; color: var(--accent); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .etichetta { color: var(--muted); font-size: .9rem; }
+  .dettagli { margin-top: 12px; font-size: .9rem; color: var(--muted); }
+  .errore { color: var(--error); font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Punteggi CdS Master</h1>
+  <p class="sub">Tabelle Master Maschili: scegli specialità e categoria, inserisci la prestazione.</p>
+
+  <form id="calcolo" novalidate>
+    <label>Specialità
+      <select id="gara"></select>
+    </label>
+    <label>Categoria
+      <select id="categoria"></select>
+    </label>
+    <label>Prestazione
+      <input id="prestazione" autocomplete="off" inputmode="decimal">
+      <span class="hint" id="formato"></span>
+    </label>
+    <button type="submit">Calcola punteggio</button>
+  </form>
+
+  <section id="risultato" aria-live="polite" hidden></section>
+</main>
+
+<script src="data/punteggi.js"></script>
+<script>
+(function () {
+  var gare = window.PUNTEGGI.gare;
+  var selGara = document.getElementById("gara");
+  var selCat = document.getElementById("categoria");
+  var input = document.getElementById("prestazione");
+  var formato = document.getElementById("formato");
+  var risultato = document.getElementById("risultato");
+
+  gare.forEach(function (g, i) {
+    selGara.add(new Option(g.nome, i));
+  });
+
+  function garaCorrente() { return gare[selGara.value]; }
+  function tabellaCorrente() { return garaCorrente().categorie[selCat.value]; }
+
+  // Converte "1h07:10.37", "3:45.20", "3'45\"20", "12.3", "12,34" in centesimi.
+  function leggiPrestazione(testo, tipo) {
+    var t = testo.trim().replace(/\s+/g, "").replace(/,/g, ".").replace(/[''’]/g, ":").replace(/["”]/g, ".");
+    var m = t.match(/^(?:(\d+)h)?(?:(\d+):)?(\d+)(?:\.(\d{1,2}))?$/i);
+    if (!m) return null;
+    if (tipo === "concorso" && (m[1] || m[2])) return null;
+    var ore = +(m[1] || 0), min = +(m[2] || 0), sec = +m[3];
+    if ((m[1] || m[2]) && sec >= 60) return null;
+    if (m[1] && min >= 60) return null;
+    var cent = m[4] ? +(m[4] + "0").slice(0, 2) : 0;
+    return ((ore * 60 + min) * 60 + sec) * 100 + cent;
+  }
+
+  function mostra(v, tipo) {
+    if (tipo === "concorso") return (v / 100).toFixed(2).replace(".", ",") + " m";
+    var cent = v % 100, s = Math.floor(v / 100);
+    var ore = Math.floor(s / 3600), min = Math.floor(s / 60) % 60, sec = s % 60;
+    var c = (cent < 10 ? "0" : "") + cent;
+    if (!ore && !min) return sec + "," + c;
+    var ss = (sec < 10 ? "0" : "") + sec;
+    if (!ore) return min + ":" + ss + "," + c;
+    return ore + "h" + (min < 10 ? "0" : "") + min + ":" + ss + "," + c;
+  }
+
+  // La tabella va dalla prestazione migliore alla peggiore. Si prende la prima riga
+  // non migliore della prestazione ottenuta (tempo >= per le corse, misura <= per i concorsi).
+  function calcola(tab, v, tipo) {
+    var peggiore = function (a, b) { return tipo === "corsa" ? a >= b : a <= b; };
+    var lo = 0, hi = tab.length;
+    while (lo < hi) {
+      var mid = (lo + hi) >> 1;
+      if (peggiore(tab[mid][0], v)) hi = mid; else lo = mid + 1;
+    }
+    return lo; // indice in tab, oppure tab.length se sotto la soglia minima
+  }
+
+  function aggiornaCategorie() {
+    var g = garaCorrente(), prec = selCat.value;
+    selCat.innerHTML = "";
+    Object.keys(g.categorie).forEach(function (c) { selCat.add(new Option(c, c)); });
+    if (g.categorie[prec]) selCat.value = prec;
+    aggiornaFormato();
+  }
+
+  function aggiornaFormato() {
+    var g = garaCorrente(), tab = tabellaCorrente();
+    var medio = tab[Math.floor(tab.length / 2)][0];
+    var unita = g.tipo === "concorso" ? "metri" : medio >= 6000 ? "min:sec,centesimi" : "secondi,centesimi";
+    input.placeholder = mostra(medio, g.tipo).replace(" m", "");
+    formato.textContent = "Formato: " + unita + ", es. " + input.placeholder + ". Tabella da " + mostra(tab[0][0], g.tipo) +
+      " (" + tab[0][1] + " pt) a " + mostra(tab[tab.length - 1][0], g.tipo) + " (" + tab[tab.length - 1][1] + " pt).";
+    risultato.hidden = true;
+  }
+
+  function scrivi(html) { risultato.innerHTML = html; risultato.hidden = false; }
+
+  document.getElementById("calcolo").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var g = garaCorrente(), tab = tabellaCorrente();
+    var v = leggiPrestazione(input.value, g.tipo);
+    if (v === null || v === 0) {
+      scrivi('<p class="errore">Prestazione non valida.</p><p class="dettagli">' + formato.textContent + "</p>");
+      return;
+    }
+    var i = calcola(tab, v, g.tipo);
+    var intro = '<div class="etichetta">' + g.nome + " · " + selCat.value + " · " + mostra(v, g.tipo) + "</div>";
+    if (i >= tab.length) {
+      scrivi(intro + '<div class="punti">0</div><div class="etichetta">punti</div>' +
+        '<p class="dettagli">Prestazione oltre il limite della tabella (' + mostra(tab[tab.length - 1][0], g.tipo) +
+        " = " + tab[tab.length - 1][1] + " pt).</p>");
+      return;
+    }
+    var riga = tab[i], dettagli;
+    if (i === 0 && riga[0] !== v) {
+      dettagli = "Prestazione migliore del massimo in tabella: punteggio massimo assegnato.";
+    } else {
+      dettagli = riga[0] === v ? "Valore presente in tabella." :
+        "Valore non presente in tabella: si usa la riga " + mostra(riga[0], g.tipo) + ".";
+      // prima riga con più punti, cioè la prestazione necessaria per salire di punteggio
+      var j = i - 1;
+      while (j >= 0 && tab[j][1] === riga[1]) j--;
+      if (j >= 0) dettagli += " Per " + tab[j][1] + " pt serve " + mostra(tab[j][0], g.tipo) + ".";
+    }
+    scrivi(intro + '<div class="punti">' + riga[1] + '</div><div class="etichetta">punti</div>' +
+      '<p class="dettagli">' + dettagli + "</p>");
+  });
+
+  selGara.addEventListener("change", aggiornaCategorie);
+  selCat.addEventListener("change", aggiornaFormato);
+  aggiornaCategorie();
+})();
+</script>
+</body>
+</html>
