@@ -136,7 +136,7 @@
       <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button>
       <button type="button" data-k="3">3</button><button type="button" data-k=",">,</button>
       <button type="button" data-k="clear" aria-label="Cancella tutto">C</button><button type="button" data-k="0">0</button>
-      <button type="button" data-k="ok" class="ok" style="grid-column: span 2">Calcola</button>
+      <button type="button" data-k=".">.</button><button type="button" data-k="ok" class="ok">Calcola</button>
     </div>
     <button type="submit">Calcola punteggio</button>
   </form>
@@ -260,9 +260,11 @@
       return;
     }
     var medio = tab[Math.floor(tab.length / 2)][0];
-    var unita = g.tipo === "concorso" ? "metri" : medio >= 6000 ? "min:sec,centesimi" : "secondi,centesimi";
-    input.placeholder = mostra(medio, g.tipo).replace(" m", "");
-    var alt = g.tipo === "corsa" && medio >= 6000 ? " (oppure " + input.placeholder.replace(/[:h]/g, ",") + ")" : "";
+    // per le corse l'esempio usa il punto per i centesimi, come nei risultati ufficiali
+    var esempio = mostra(medio, g.tipo);
+    var unita = g.tipo === "concorso" ? "metri" : medio >= 6000 ? "min:sec.centesimi" : "secondi.centesimi";
+    input.placeholder = g.tipo === "concorso" ? esempio.replace(" m", "") : esempio.replace(/,(\d\d)$/, ".$1");
+    var alt = g.tipo === "corsa" ? " (oppure " + esempio + ")" : "";
     formato.textContent = "Formato: " + unita + ", es. " + input.placeholder + alt + ". Tabella da " + mostra(tab[0][0], g.tipo) +
       " (" + tab[0][1] + " pt) a " + mostra(tab[tab.length - 1][0], g.tipo) + " (" + tab[tab.length - 1][1] + " pt).";
   }

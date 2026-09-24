@@ -9,10 +9,10 @@ Aprire `index.html` in un browser. Non serve un server né una connessione a int
 
 Formati accettati per la prestazione:
 
-- corse: `12,34` / `12.34`, `1:45,30`, `1h07:10,37` (anche solo con la virgola: `1,45,30`)
+- corse: `12.34` / `12,34`, `1:45.30`, `1h07:10.37` (anche solo con virgole o punti: `1,45,30`, `1.45.30`)
 - concorsi: misura in metri, es. `1,65` / `45.30`
 
-Su telefoni e tablet, toccando il campo prestazione compare un tastierino con cifre, `:` e `,` al posto della tastiera di sistema.
+Su telefoni e tablet, toccando il campo prestazione compare un tastierino con cifre, `:`, `,` e `.` al posto della tastiera di sistema.
 
 Se la prestazione non compare esattamente in tabella si usa la prima riga non migliore della prestazione
 (tempo uguale o superiore per le corse, misura uguale o inferiore per i concorsi). Una prestazione oltre il limite
